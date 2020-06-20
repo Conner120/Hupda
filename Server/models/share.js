@@ -2,7 +2,7 @@
 var uuid = require('uuid');
 
 module.exports = function (sequelize, DataTypes) {
-    const post = sequelize.define('post', {
+    const share = sequelize.define('share', {
         id: {
             type: DataTypes.UUID,
             allowNull: false,
@@ -18,16 +18,20 @@ module.exports = function (sequelize, DataTypes) {
             unique: false,
             field: 'title'
         },
+        postId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: {
+                model: 'post',
+                key: 'id'
+            },
+            field: 'post_id'
+        },
         content: {
             type: DataTypes.TEXT,
             allowNull: false,
             unique: false,
             field: 'content',
-        },
-        impressions: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0,
-            field: 'impressions',
         },
         profileId: {
             type: DataTypes.UUID,
@@ -57,28 +61,13 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.DATE,
             allowNull: true,
             field: 'updatedAt'
-        },
-        shareCount: {
-            type: DataTypes.INTEGER,
-            default: 0
-        },
-        commentCount: {
-            type: DataTypes.INTEGER,
-            default: 0
-        },
-        reactionsMeta: {
-            type: DataTypes.JSON,
-            default: {}
-        },
+        }
     }, {
-        tableName: 'posts'
+        tableName: 'sharePost'
     });
-    post.associate = function (models) {
-        post.hasMany(models.postMedia, { as: 'media', foreignKey: 'post_id', sourceKey: 'id' });
-        post.hasMany(models.reaction, { foreignKey: 'post_id', sourceKey: 'id' });
-        post.belongsTo(models.profile, { foreignKeyConstraint: true, as: "poster", foreignKey: 'profile_id' })
-        post.hasMany(models.comment, { as: 'comments', foreignKey: 'post_id', sourceKey: 'id' })
-        post.hasMany(models.share, { as: 'shares', foreignKey: 'post_id', sourceKey: 'id' })
+    share.associate = function (models) {
+        share.belongsTo(models.profile, { foreignKeyConstraint: true, as: "poster", foreignKey: 'profile_id' });
+        share.belongsTo(models.post, { as: 'sharedContent', foreignKey: 'post_id', sourceKey: 'id' })
     }
-    return post;
+    return share;
 };

@@ -14,10 +14,10 @@ module.exports = function (sequelize, DataTypes) {
         postId: {
             type: DataTypes.UUID,
             allowNull: false,
-            // references: {
-            //     model: 'post',
-            //     key: 'id'
-            // },
+            references: {
+                model: 'post',
+                key: 'id'
+            },
             field: 'post_id'
         },
         commentId: {
