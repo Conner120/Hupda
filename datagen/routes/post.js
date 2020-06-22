@@ -49,9 +49,9 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         if (requestedPost) {
             if ((new Date() - new Date(requestedPost.sharedContent.updatedAt)) > 30000) {
                 requestedPost.sharedContent.update({
-                    shareCount: await requestedPost.sharedContent.countShares(),
+                    shareCount: await comment.count({ where: { postId: requestedPost.sharedContent.id } }),
                     reactionsMeta: await reactionCount(requestedPost.sharedContent.id),
-                    commentCount: await requestedPost.sharedContent.countComments(),
+                    commentCount: await comment.count({ where: { postId: requestedPost.sharedContent.id } })
                 });
             }
             requestedPost.sharedContent.poster.dataValues['friend_friend'] = undefined
@@ -63,7 +63,6 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
             requestedPost.sharedContent.poster.dataValues['settings'] = undefined
             requestedPost.sharedContent.poster.dataValues['userId'] = undefined
             requestedPost.sharedContent.poster.dataValues['user_id'] = undefined
-            requestedPost.sharedContent.commentCount = await requestedPost.sharedContent.countComments();
             switch (requestedPost.dataValues.alc) {
                 case 0:
                     if (requestedPost.sharedContent.poster.userId === req.user.id) {
@@ -225,6 +224,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 fri = fri.flat()
                 if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
                     let fids = fri.map(x => x.id);
+                    console.log(fids)
                     requestedPost.dataValues.reaction = await reaction.findAll({
                         where: {
                             postId: req.query.id,
@@ -302,6 +302,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 fri = fri.flat()
                 if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
                     let fids = fri.map(x => x.id);
+                    console.log(fids)
                     requestedPost.dataValues.reaction = await reaction.findAll({
                         where: {
                             postId: req.query.id,
@@ -435,6 +436,7 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
             Expiry: expiryDate
         }
     };
+    console.log(media)
     let createdPost = await post.create({
         id: postId,
         title: req.body.title,
@@ -450,6 +452,7 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
         await postMedia.create({ id: x.id, type: x.filetype, description: x.description, acl: req.body.acl, profileId: pid, postId })
     })
     createdPost.dataValues.media = media;
+    console.log(createdPost)
     res.send(createdPost)
 })
 router.post('/reaction', passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -518,8 +521,10 @@ router.get('/comment', passport.authenticate('jwt', { session: false }), async (
     const puid = (await req.user.getProfile()).userId
     if (requestedComments) {
         let comments = [];
+        console.log('test')
         let pid = (await req.user.getProfile()).id
         await asyncForEach(requestedComments, (async (x) => {
+            console.log(x.commentPost)
             requestedPost = x.commentPost
             switch (requestedPost.dataValues.alc) {
                 case 0:
