@@ -514,17 +514,28 @@ router.post('/reaction', passport.authenticate('jwt', { session: false }), async
     }
 })
 router.get('/comment', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    let requestedComments = await comment.findAll({ where: { post_id: req.query.id }, offset: req.query.start, limit: req.query.size, include: [{ model: post, as: 'commentPost', include: [{ model: profile, as: 'poster', attributes: ['first', 'last', 'alc', 'id'] }] }] })
+    let size = parseInt(req.query.size ? req.query.size : 1)
+    if (size > 50) {
+        size = 50
+    } else if (size < 4) {
+        size += 2;
+    }
+    console.log(size)
+    let requestedComments = await comment.findAll({ where: { post_id: req.query.id }, distinct: true, offset: (req.query.start ? req.query.start : 0), limit: size, include: [{ model: post, as: 'commentPost', include: [{ model: profile, as: 'poster', attributes: ['first', 'last', 'alc', 'id'] }] }] })
     const puid = (await req.user.getProfile()).userId
     if (requestedComments) {
         let comments = [];
         let pid = (await req.user.getProfile()).id
         await asyncForEach(requestedComments, (async (x) => {
             requestedPost = x.commentPost
+
             switch (requestedPost.dataValues.alc) {
                 case 0:
                     if (requestedPost.poster.userId === req.user.id) {
                         comments.push(requestedPost)
+                        await requestedPost.update({
+                            impressions: (parseInt(requestedPost.impressions) + 1)
+                        })
                     } else {
                     }
                     break;
@@ -532,6 +543,9 @@ router.get('/comment', passport.authenticate('jwt', { session: false }), async (
                     const friends = (await (requestedPost.poster).getFriends())
                     if (friends.some(x => x.id === req.user.id) || requestedPost.poster.userId === req.user.id) {
                         comments.push(requestedPost)
+                        await requestedPost.update({
+                            impressions: (parseInt(requestedPost.impressions) + 1)
+                        })
                     } else {
                     }
                     break;
@@ -545,6 +559,9 @@ router.get('/comment', passport.authenticate('jwt', { session: false }), async (
                     fri = fri.flat()
                     if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
                         comments.push(requestedPost)
+                        await requestedPost.update({
+                            impressions: (parseInt(requestedPost.impressions) + 1)
+                        })
                     } else {
                     }
                     break;
@@ -552,6 +569,9 @@ router.get('/comment', passport.authenticate('jwt', { session: false }), async (
                     break;
                 case 4:
                     comments.push(requestedPost)
+                    await requestedPost.update({
+                        impressions: (parseInt(requestedPost.impressions) + 1)
+                    })
                     break;
             }
         }))
@@ -643,9 +663,9 @@ router.post('/comment', passport.authenticate('jwt', { session: false }), async 
     }
 })
 async function asyncForEach(array, callback) {
-    for (let index = 0; index < array.length; index++) {
-        await callback(array[index], index, array);
-    }
+    await Promise.all(array.map(async (item, index) => {
+        await callback(item, index, array);
+    }))
 }
 async function reactionCount(id) {
     return new Promise(async (resolve, reject) => {

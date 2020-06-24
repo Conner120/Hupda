@@ -12,9 +12,9 @@ const { post } = require('./routes')
 const profileRouter = require('./routes/profile')
 app.use(express.json())
 app.use(logResponseTime);
-app.use('/post', post)
+app.use('/api/post', post)
 authSecret = "ConnerRocks"
-app.use('/profile', profileRouter)
+app.use('/api/profile', profileRouter)
 
 //app.use(express.json());
 //configure app to serve static files from public folder
