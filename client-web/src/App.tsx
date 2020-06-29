@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import clsx from 'clsx';
+import { Switch, Route } from 'react-router-dom';
 import {
-  BrowserRouter as Router,
-} from "react-router-dom";
+  LoginView
+} from './views';
+import { useHistory, useLocation } from "react-router-dom";
+import { Link } from '@material-ui/core';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import AppBar from '@material-ui/core/AppBar';
@@ -15,13 +18,15 @@ import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import MenuOpenIcon from '@material-ui/icons/MenuOpen';
 import ListItem from '@material-ui/core/ListItem';
+import { FiActivity } from 'react-icons/fi'
+import { RiUser3Line } from 'react-icons/ri'
+
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import MailIcon from '@material-ui/icons/Mail';
-import Button from '@material-ui/core/Button'
+// import Button from '@material-ui/core/Button'
 import Routes from './Routes'
-import { createBrowserHistory } from "history";
 import { useStores } from './stores'
 const drawerWidth = 240;
 
@@ -71,8 +76,8 @@ const useStyles = makeStyles((theme: Theme) =>
       }),
       overflowX: 'hidden',
       width: theme.spacing(7) + 1,
-      [theme.breakpoints.up('sm')]: {
-        width: theme.spacing(9) + 1,
+      [theme.breakpoints.down('sm')]: {
+        width: theme.spacing(0) + 1,
       },
     },
     toolbar: {
@@ -91,87 +96,112 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export default function App() {
-
+  let location = useLocation();
+  const history = useHistory();
   const classes = useStyles();
-  const { AppState } = useStores()
+  const { App, Profile } = useStores()
   const [open, setOpen] = React.useState(false);
+  let [requestSent, setRequestSent] = React.useState(false)
   const handleDrawerOpen = () => {
     setOpen(true);
   };
-  const history = createBrowserHistory();
-
+  const home = () => {
+    if (window.location.pathname !== '/') {
+      history.push('/')
+    }
+  }
+  useEffect(() => {
+    if (!requestSent) {
+      setRequestSent(true)
+      fetch(`/api/profile`, {
+        method: 'Get',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'jwt': App.auth
+        }
+      }).then(res => {
+        return res.json();
+      }).then(post => {
+        Profile.id = post.id
+      });
+    }
+  })
   const handleDrawerClose = () => {
     setOpen(false);
   };
-  console.log(AppState.authenticated)
-  AppState.authenticated += 1
+  const goToPage = (path: string) => {
+    history.push(path)
+  };
   return (
     <div className={classes.root}>
-      <Router history={history}>
-
-        <CssBaseline />
-        <AppBar
-          position="fixed"
-          className={clsx(classes.appBar, {
-            // [classes.appBarShift]: open,
-          })}
+      <Switch>
+        <Route
+          component={LoginView}
+          exact
+          path="/login"
+        />
+        <Route
         >
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              onClick={open ? handleDrawerClose : handleDrawerOpen}
-              edge="start"
-              className={clsx(classes.menuButton, {
-                // [classes.hide]: open,
-              })}
-            >
-              {open ? <MenuOpenIcon /> : <MenuIcon />}
-            </IconButton>
-            <Typography variant="h6" noWrap>
-              Hupda
-          </Typography>
-          </Toolbar>
-        </AppBar>
-        <Drawer
-          variant="permanent"
-          className={clsx(classes.drawer, {
-            [classes.drawerOpen]: open,
-            [classes.drawerClose]: !open,
-          })}
-          classes={{
-            paper: clsx({
+          <CssBaseline />
+          <AppBar
+            position="fixed"
+            className={clsx(classes.appBar, {
+              // [classes.appBarShift]: open,
+            })}
+          >
+            <Toolbar>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={open ? handleDrawerClose : handleDrawerOpen}
+                edge="start"
+                className={clsx(classes.menuButton, {
+                  // [classes.hide]: open,
+                })}
+              >
+                {open ? <MenuOpenIcon /> : <MenuIcon />}
+              </IconButton>
+              <div onClick={home}>
+                <Typography variant="h6" noWrap>
+                  Hupda
+              </Typography>
+              </div>
+            </Toolbar>
+          </AppBar>
+          <Drawer
+            variant="permanent"
+            className={clsx(classes.drawer, {
               [classes.drawerOpen]: open,
               [classes.drawerClose]: !open,
-            }),
-          }}
-        >
-          <div className={classes.toolbar}>
-          </div>
-          <Divider />
-          <List>
-            {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-              <ListItem button key={text}>
-                <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                <ListItemText primary={text} />
+            })}
+            classes={{
+              paper: clsx({
+                [classes.drawerOpen]: open,
+                [classes.drawerClose]: !open,
+              }),
+            }}
+          >
+            <div className={classes.toolbar}>
+            </div>
+            <Divider />
+            <List>
+              <ListItem button onClick={() => { goToPage('/topic') }} key={'Trending Topics'} selected={location.pathname.startsWith('/topic')}>
+                <ListItemIcon><FiActivity size={'2em'} /></ListItemIcon>
+                <ListItemText primary={'Trending Topics'} />
               </ListItem>
-            ))}
-          </List>
-          <Divider />
-          <List>
-            {['All mail', 'Trash', 'Spam'].map((text, index) => (
-              <ListItem button key={text} selected={true}>
-                <ListItemIcon>{index % 2 === 0 ? <InboxIcon /> : <MailIcon />}</ListItemIcon>
-                <ListItemText primary={text} />
+              <ListItem button onClick={() => { goToPage(`/profile/${Profile.id}`) }} key={'My Page'} selected={location.pathname.startsWith('/profile')}>
+                <ListItemIcon><RiUser3Line size={'2em'} /></ListItemIcon>
+                <ListItemText primary={'My Page'} />
               </ListItem>
-            ))}
-          </List>
-        </Drawer>
-        <main className={classes.content}>
-          <div className={classes.toolbar} />
-          <Routes />
-        </main>
-      </Router>
+            </List>
+          </Drawer>
+          <main className={classes.content}>
+            <div className={classes.toolbar} />
+            <Routes />
+          </main>
+        </Route>
+      </Switch>
 
     </div >
   );

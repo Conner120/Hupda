@@ -1,14 +1,27 @@
 import React from 'react';
 import { Switch, Redirect, Route } from 'react-router-dom';
 import Cookies from 'js-cookie'
-import { createBrowserHistory } from "history";
+import { useHistory } from "react-router-dom";
 import {
     Home as HomeView,
-    NotFound as NotFoundView
+    NotFound as NotFoundView,
+    PostView,
+    LoginView,
+    ProfileView,
+    TopicView,
+    CreatePostView,
 } from './views';
-const Routes = () => {
-    if (!Cookies.get('jwt')) {
+import { useStores } from './stores'
+import Profile from './stores/ProfileState';
 
+const Routes = () => {
+    let history = useHistory();
+    const { App } = useStores()
+    console.log(Cookies.get('jwt'))
+    if (Cookies.get('jwt')) {
+        App.auth = (Cookies.get('jwt') ? Cookies.get('jwt') : '') as string
+    } else {
+        history.push('/login')
     }
 
     return (
@@ -22,8 +35,37 @@ const Routes = () => {
             <Route
                 component={NotFoundView}
                 exact
-                path="/home"
+                path="/not-found"
             />
+            <Route path="/post/:id">
+                <PostView />
+            </Route>
+            <Route path="/create/post/:id">
+                <CreatePostView />
+            </Route>
+            <Route path="/create/post">
+                <CreatePostView />
+            </Route>
+            <Route
+                component={LoginView}
+                exact
+                path="/login"
+            />
+            <Route
+                path="/profile/:id"
+            >
+                <ProfileView />
+            </Route>
+            <Route
+                path="/topic/:id"
+            >
+                <TopicView />
+            </Route>
+            <Route
+                path="/topic"
+            >
+                <TopicView />
+            </Route>
             <Redirect to="/not-found" />
         </Switch>
     );

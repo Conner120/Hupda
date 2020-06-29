@@ -11,8 +11,9 @@ const { v4 } = require('uuid');
 // const redis = require('redis');
 const { Op } = require("sequelize");
 const e = require('express');
+const redis = require('redis');
 
-// const cache = redis.createClient(32771, 'localhost');
+const cache = redis.createClient(32771, 'localhost');
 
 // middleware that is specific to this router
 router.use(function timeLog(req, res, next) {
@@ -32,7 +33,7 @@ router.use(function timeLog(req, res, next) {
 // define the home page route
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const puid = (await req.user.getProfile()).userId
-    let requestedPost = await post.findOne({ where: { id: req.query.id }, include: [{ model: profile, as: 'poster' }] })
+    let requestedPost = await post.findOne({ where: { id: req.query.id }, include: [{ model: profile, as: 'poster' }, { model: postMedia, as: 'media' }] })
     var startDate = new Date();
     var expiryDate = new Date(startDate);
     expiryDate.setMinutes(startDate.getMinutes() + 120);
@@ -68,18 +69,16 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 case 0:
                     if (requestedPost.sharedContent.poster.userId === req.user.id) {
 
-                        let token = blobService.generateSharedAccessSignature("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, sharedAccessPolicy);
-                        let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, token);
-                        requestedPost.poster.profilepicuri = uri
+                        let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`);
+                        requestedPost.sharedContent.poster.profilepicuri = uri
                     } else {
                     }
                     break;
                 case 1:
                     const friends = (await (requestedPost.poster).getFriends())
                     if (friends.some(x => x.id === req.user.id) || requestedPost.poster.userId === req.user.id) {
-                        let token = blobService.generateSharedAccessSignature("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, sharedAccessPolicy);
-                        let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, token);
-                        requestedPost.poster.profilepicuri = uri
+                        let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`);
+                        requestedPost.sharedContent.poster.profilepicuri = uri
                     } else {
                     }
                     break;
@@ -92,18 +91,17 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                     });
                     fri = fri.flat()
                     if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
-                        let token = blobService.generateSharedAccessSignature("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, sharedAccessPolicy);
-                        let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, token);
-                        requestedPost.poster.profilepicuri = uri
+                        let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`);
+                        requestedPost.sharedContent.poster.profilepicuri = uri
                     } else {
                     }
                     break;
                 case 3:
                     break;
                 case 4:
-                    let token = blobService.generateSharedAccessSignature("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, sharedAccessPolicy);
-                    let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`, token);
-                    requestedPost.poster.profilepicuri = uri
+                    let uri = blobService.getUrl("profilemedia", `${requestedPost.sharedContent.poster.id}.png`);
+                    requestedPost.sharedContent.poster.profilepicuri = uri
+
                     break;
             }
         } else {
@@ -117,6 +115,11 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 commentCount: await comment.count({ where: { postId: requestedPost.id } })
             });
         }
+        if (requestedPost.root) {
+            let rootPostId = (await comment.findOne({ where: { commentId: requestedPost.id } })).postId
+            requestedPost.dataValues.rootPost = await post.findOne({ where: { id: rootPostId }, include: [{ model: profile, as: 'poster' }, { model: postMedia, as: 'media' }] })
+            console.log(await post.findOne({ where: { id: rootPostId }, include: [{ model: profile, as: 'poster' }, { model: postMedia, as: 'media' }] }))
+        }
     }
     if (requestedPost) {
         switch (requestedPost.dataValues.alc) {
@@ -124,8 +127,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 if (requestedPost.poster.userId === req.user.id) {
 
                 } else {
-                    let token = blobService.generateSharedAccessSignature("profilemedia", `${x.id}.${x.filetype}`, sharedAccessPolicy);
-                    let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`, token);
+                    let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`);
                     requestedPost.poster.profilepicuri = uri
                 }
                 break;
@@ -133,8 +135,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 const friends = (await (requestedPost.poster).getFriends())
                 if (friends.some(x => x.id === req.user.id) || requestedPost.poster.userId === req.user.id) {
                 } else {
-                    let token = blobService.generateSharedAccessSignature("profilemedia", `${x.id}.${x.filetype}`, sharedAccessPolicy);
-                    let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`, token);
+                    let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`);
                     requestedPost.poster.profilepicuri = uri
                 }
                 break;
@@ -147,18 +148,15 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 });
                 fri = fri.flat()
                 if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
-
-                } else {
-                    let token = blobService.generateSharedAccessSignature("profilemedia", `${x.id}.${x.filetype}`, sharedAccessPolicy);
-                    let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`, token);
+                    let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`);
                     requestedPost.poster.profilepicuri = uri
+                } else {
                 }
                 break;
             case 3:
                 break;
             case 4:
-                let token = blobService.generateSharedAccessSignature("profilemedia", `${x.id}.${x.filetype}`, sharedAccessPolicy);
-                let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`, token);
+                let uri = blobService.getUrl("profilemedia", `${requestedPost.poster.id}.png`);
                 requestedPost.poster.profilepicuri = uri
                 break;
         }
@@ -177,8 +175,8 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         let media = []
         if (requestedPost.media) {
             await asyncForEach(requestedPost.media, async (x) => {
-                let token = blobService.generateSharedAccessSignature("postmedia", `${x.id}.${x.filetype}`, sharedAccessPolicy);
-                let uri = blobService.getUrl("postmedia", `${x.id}.${x.filetype}`, token);
+                let token = blobService.generateSharedAccessSignature("postmedia", `${x.id}.${x.type}`, sharedAccessPolicy);
+                let uri = blobService.getUrl("postmedia", `${x.id}.${x.type}`, token);
                 media.push(x.dataValues)
                 media[media.length - 1].uri = uri
             })
@@ -255,91 +253,85 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         res.send(404, 'not found')
     }
 })
-router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const puid = (await req.user.getProfile()).userId
-    let requestedPost = await post.findOne({ where: { id: req.query.id }, include: [{ model: profile, as: 'poster' }] })
-    if (requestedPost) {
+// router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+//     const puid = (await req.user.getProfile()).userId
+//     let requestedPost = await post.findOne({ where: { id: req.query.id }, include: [{ model: profile, as: 'poster' }] })
+//     if (requestedPost) {
 
-        switch (requestedPost.dataValues.alc) {
-            case 0:
-                if (requestedPost.poster.userId === req.user.id) {
-                    requestedPost.update({
-                        impressions: (parseInt(requestedPost.impressions) + 1)
-                    })
-                    res.send(requestedPost)
-                } else {
-                    res.send(300, 'not valid access')
-                }
-                break;
-            case 1:
-                const friends = (await (requestedPost.poster).getFriends())
-                if (friends.some(x => x.id === req.user.id) || requestedPost.poster.userId === req.user.id) {
-                    let fids = friends.map(x => x.id);
-                    requestedPost.dataValues.reaction = await reaction.findAll({
-                        where: {
-                            postId: req.query.id,
-                            profileId: {
-                                [Op.or]: fids,
-                                [Op.or]: pid
-                            }
-                        }
-                    })
-                    requestedPost.update({
-                        impressions: (parseInt(requestedPost.impressions) + 1)
-                    })
-                    res.send(requestedPost)
-                } else {
-                    res.send(300, 'not valid access')
-                }
-                break;
-            case 2:
-                let friendsoffriends = (await (requestedPost.poster).getFriends())
-                let fri = [...friendsoffriends];
-                await asyncForEach(friendsoffriends, async (x) => {
-                    let t = await x.getFriends()
-                    fri.push(t)
-                });
-                fri = fri.flat()
-                if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
-                    let fids = fri.map(x => x.id);
-                    requestedPost.dataValues.reaction = await reaction.findAll({
-                        where: {
-                            postId: req.query.id,
-                            profileId: {
-                                [Sequelize.Op.in]: fids
-                            },
-                        }
-                    })
-                    requestedPost.update({
-                        impressions: (parseInt(requestedPost.impressions) + 1)
-                    })
-                    res.send(requestedPost)
-                } else {
-                    res.send(300, 'not valid access')
-                }
-                break;
-            case 3:
-                res.send(200, 'yet to be implemented')
-                break;
-            case 4:
-                requestedPost.update({
-                    impressions: (parseInt(requestedPost.impressions) + 1)
-                })
-                res.send(requestedPost)
-                break;
-        }
-    }
-})
+//         switch (requestedPost.dataValues.alc) {
+//             case 0:
+//                 if (requestedPost.poster.userId === req.user.id) {
+//                     requestedPost.update({
+//                         impressions: (parseInt(requestedPost.impressions) + 1)
+//                     })
+//                     res.send(requestedPost)
+//                 } else {
+//                     res.send(300, 'not valid access')
+//                 }
+//                 break;
+//             case 1:
+//                 const friends = (await (requestedPost.poster).getFriends())
+//                 if (friends.some(x => x.id === req.user.id) || requestedPost.poster.userId === req.user.id) {
+//                     let fids = friends.map(x => x.id);
+//                     requestedPost.dataValues.reaction = await reaction.findAll({
+//                         where: {
+//                             postId: req.query.id,
+//                             profileId: {
+//                                 [Op.or]: fids,
+//                                 [Op.or]: pid
+//                             }
+//                         }
+//                     })
+//                     requestedPost.update({
+//                         impressions: (parseInt(requestedPost.impressions) + 1)
+//                     })
+//                     res.send(requestedPost)
+//                 } else {
+//                     res.send(300, 'not valid access')
+//                 }
+//                 break;
+//             case 2:
+//                 let friendsoffriends = (await (requestedPost.poster).getFriends())
+//                 let fri = [...friendsoffriends];
+//                 await asyncForEach(friendsoffriends, async (x) => {
+//                     let t = await x.getFriends()
+//                     fri.push(t)
+//                 });
+//                 fri = fri.flat()
+//                 if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
+//                     let fids = fri.map(x => x.id);
+//                     requestedPost.dataValues.reaction = await reaction.findAll({
+//                         where: {
+//                             postId: req.query.id,
+//                             profileId: {
+//                                 [Sequelize.Op.in]: fids
+//                             },
+//                         }
+//                     })
+//                     requestedPost.update({
+//                         impressions: (parseInt(requestedPost.impressions) + 1)
+//                     })
+//                     res.send(requestedPost)
+//                 } else {
+//                     res.send(300, 'not valid access')
+//                 }
+//                 break;
+//             case 3:
+//                 res.send(200, 'yet to be implemented')
+//                 break;
+//             case 4:
+//                 requestedPost.update({
+//                     impressions: (parseInt(requestedPost.impressions) + 1)
+//                 })
+//                 res.send(requestedPost)
+//                 break;
+//         }
+//     }
+// })
 router.post('/share', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const puid = (await req.user.getProfile()).userId
     const requestedPost = await post.findOne({ where: { id: req.body.id }, include: [{ model: profile, as: 'poster' }] })
     if (requestedPost) {
-        if ((new Date() - new Date(requestedPost.updatedAt)) > 30000) {
-            requestedPost.update({
-                shareCount: await comment.count({ where: { postId: requestedPost.id } }),
-                reactionsMeta: await reactionCount(requestedPost.id),
-                commentCount: await comment.count({ where: { postId: requestedPost.id } })
-            });
-        }
         switch (requestedPost.dataValues.alc) {
             case 0:
                 if (requestedPost.poster.userId === req.user.id) {
@@ -449,6 +441,16 @@ router.post('/', passport.authenticate('jwt', { session: false }), async (req, r
         media.push({ id: x.id, uri, description: x.description, acl: req.body.acl, profileId: pid, postId })
         await postMedia.create({ id: x.id, type: x.filetype, description: x.description, acl: req.body.acl, profileId: pid, postId })
     })
+    req.body.content.split(' ').forEach((word) => {
+        let wc = cache.get(word, (err, reply) => {
+            if (reply) {
+                cache.set(word, (parseInt(reply) + 1))
+            } else {
+                cache.set(word, 1)
+            }
+        })
+    })
+
     createdPost.dataValues.media = media;
     res.send(createdPost)
 })
@@ -521,14 +523,26 @@ router.get('/comment', passport.authenticate('jwt', { session: false }), async (
         size += 2;
     }
     console.log(size)
-    let requestedComments = await comment.findAll({ where: { post_id: req.query.id }, distinct: true, offset: (req.query.start ? req.query.start : 0), limit: size, include: [{ model: post, as: 'commentPost', include: [{ model: profile, as: 'poster', attributes: ['first', 'last', 'alc', 'id'] }] }] })
+    let requestedComments = await comment.findAll({
+        where: { post_id: req.query.id }, distinct: true,
+        offset: (req.query.start ? req.query.start : 0),
+        limit: size, order: [['createdAt', 'DESC']],
+        include: [{
+            model: post, as: 'commentPost',
+            include: [{
+                model: profile, as: 'poster',
+                attributes: ['first', 'last', 'alc', 'id']
+            }
+            ]
+        }]
+    })
+    // console.log(JSON.parse(JSON.stringify(requestedComments)))
     const puid = (await req.user.getProfile()).userId
     if (requestedComments) {
         let comments = [];
         let pid = (await req.user.getProfile()).id
         await asyncForEach(requestedComments, (async (x) => {
-            requestedPost = x.commentPost
-
+            let requestedPost = x.commentPost
             switch (requestedPost.dataValues.alc) {
                 case 0:
                     if (requestedPost.poster.userId === req.user.id) {
@@ -575,6 +589,7 @@ router.get('/comment', passport.authenticate('jwt', { session: false }), async (
                     break;
             }
         }))
+        // console.log(comments)
         res.status(200).send(comments)
     } else {
         res.status(404).send('not found')
@@ -593,6 +608,7 @@ router.post('/comment', passport.authenticate('jwt', { session: false }), async 
                         content: req.body.content,
                         profileId: pid,
                         alc: req.body.alc,
+                        root: false
                     })
                     res.send(await comment.create({
                         postId: req.body.id,
@@ -610,6 +626,7 @@ router.post('/comment', passport.authenticate('jwt', { session: false }), async 
                         content: req.body.content,
                         profileId: pid,
                         alc: req.body.alc,
+                        root: false
                     })
                     res.send(await comment.create({
                         postId: req.body.id,
@@ -633,6 +650,7 @@ router.post('/comment', passport.authenticate('jwt', { session: false }), async 
                         content: req.body.content,
                         profileId: pid,
                         alc: req.body.alc,
+                        root: false
                     })
                     res.send(await comment.create({
                         postId: req.body.id,
@@ -651,6 +669,7 @@ router.post('/comment', passport.authenticate('jwt', { session: false }), async 
                     content: req.body.content,
                     profileId: pid,
                     alc: req.body.alc,
+                    root: false
                 })
                 res.send(await comment.create({
                     postId: req.body.id,

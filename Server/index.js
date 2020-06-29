@@ -10,18 +10,33 @@ const logResponseTime = require("./response-time-logger");
 const { user, profile } = require('./models');
 const { post } = require('./routes')
 const profileRouter = require('./routes/profile')
+var compression = require('compression')
 app.use(express.json())
 app.use(logResponseTime);
 app.use('/api/post', post)
 authSecret = "ConnerRocks"
 app.use('/api/profile', profileRouter)
+app.use(express.static('public'))
+app.use(compression({ filter: shouldCompress }))
 
+function shouldCompress(req, res) {
+    if (req.headers['x-no-compression']) {
+        // don't compress responses with this request header
+        return false
+    }
+
+    // fallback to standard filter function
+    return compression.filter(req, res)
+}
 //app.use(express.json());
 //configure app to serve static files from public folder
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "conner.rocks"); // update to match the domain you will make the request from
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
+});
+app.get('*', function (req, res) {
+    res.sendFile('index.html', { root: path.join(__dirname, '/public') });
 });
 const cors = require('cors')
 
@@ -167,6 +182,6 @@ var cookieExtractor = function (req) {
     if (req && req.cookies) token = req.cookies.jwt;
     return token;
 };
-app.listen(3000 || process.env.PORT, () => {
-    console.log("Server listening on port 3000")
+app.listen(4000 || process.env.PORT, () => {
+    console.log("Server listening on port 4000")
 })
