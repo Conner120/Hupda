@@ -9,16 +9,46 @@ const cookieParser = require('cookie-parser');
 const logResponseTime = require("./response-time-logger");
 const { user, profile } = require('./models');
 const { post } = require('./routes')
+const typeDefs = require("./graphql/Types");
+const resolvers = require("./Graphql/Resolvers/");
+const { ApolloServer, gql } = require("apollo-server-express");
 const profileRouter = require('./routes/profile')
 var compression = require('compression')
+var graphqlHTTP = require('express-graphql').graphqlHTTP;
+var { buildSchema } = require('graphql');
 app.use(express.json())
 app.use(logResponseTime);
 app.use('/api/post', post)
 authSecret = "ConnerRocks"
 app.use('/api/profile', profileRouter)
-app.use(express.static('public'))
-app.use(compression({ filter: shouldCompress }))
 
+// app.use(express.static('public'))
+app.use(compression({ filter: shouldCompress }))
+// const server = new ApolloServer({
+//     typeDefs: gql(typeDefs),
+//     resolvers,
+// });
+app.use('/graphql', (req, res, next) => {
+    passport.authenticate('jwt', { session: false }, (err, user, info) => {
+        if (user) {
+            req.user = user
+        }
+        if (user) {
+            next()
+        } else {
+            res.send({ errors: [{ message: "Unauthorized" }] })
+        }
+    })(req, res, next)
+})
+app.use('/graphql', graphqlHTTP({
+    schema: buildSchema(typeDefs),
+    rootValue: resolvers,
+    graphiql: {
+        headerEditorEnabled: true
+    }
+}))
+
+// Construct a schema, using GraphQL schema language
 function shouldCompress(req, res) {
     if (req.headers['x-no-compression']) {
         // don't compress responses with this request header
@@ -35,9 +65,7 @@ app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
-app.get('*', function (req, res) {
-    res.sendFile('index.html', { root: path.join(__dirname, '/public') });
-});
+
 const cors = require('cors')
 
 const corsOptions = {
@@ -76,7 +104,6 @@ app.post('/auth', cors(corsOptions), (req, res, next) => {
             res.status(400).send(error);
         });
 });
-
 app.post('/signup', async (req, res) => {
     if (!req.body.username || !req.body.password) {
         res.status(400).send({ msg: 'Please pass username and password.' });
@@ -183,5 +210,5 @@ var cookieExtractor = function (req) {
     return token;
 };
 app.listen(4000 || process.env.PORT, () => {
-    console.log("Server listening on port 4000")
+    console.log(`🚀 Server ready at http://localhost:4000`)
 })
