@@ -1,6 +1,5 @@
 
 export interface Post {
-    "id": "5c0f091d-4353-4092-9df7-126785333d21",
     id: string,
     title: string,
     postId: string,

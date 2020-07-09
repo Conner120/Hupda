@@ -24,11 +24,6 @@ module.exports = function (sequelize, DataTypes) {
             unique: false,
             field: 'content',
         },
-        impressions: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0,
-            field: 'impressions',
-        },
         profileId: {
             type: DataTypes.UUID,
             allowNull: false,
@@ -57,18 +52,6 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.DATE,
             allowNull: true,
             field: 'updatedAt'
-        },
-        shareCount: {
-            type: DataTypes.INTEGER,
-            default: 0
-        },
-        commentCount: {
-            type: DataTypes.INTEGER,
-            default: 0
-        },
-        reactionsMeta: {
-            type: DataTypes.JSON,
-            default: {}
         },
         root: {
             type: DataTypes.BOOLEAN,

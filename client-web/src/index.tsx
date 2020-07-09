@@ -9,13 +9,13 @@ import * as serviceWorker from './serviceWorker';
 import theme from './theme'
 import { ThemeProvider } from '@material-ui/core';
 ReactDOM.render(
-  <React.StrictMode>
-    <Router>
+  <Router >
+    <React.StrictMode>
       <ThemeProvider theme={theme}>
         <App />
       </ThemeProvider>
-    </Router>
-  </React.StrictMode>,
+    </React.StrictMode>
+  </Router>,
   document.getElementById('root')
 );
 

@@ -18,7 +18,7 @@ import { Link, IconButton } from '@material-ui/core';
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
-            height: '-webkit-fill-available'
+            // height: '-webkit-fill-available'
         },
         media: {
             height: 0,
@@ -51,18 +51,20 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export default function PostView(props: { post: Post, compressed?: boolean }) {
+export default function PostView(props: { post: Post, compressed?: boolean, requestedId?: string }) {
     const classes = useStyles();
     let [comments, setComments] = useState()
     let [requestSent, setRequestSent] = useState(false)
     const history = useHistory();
     const { App } = useStores()
     const goToPost = (id: string) => {
-        history.push(`/post/${id}`)
+        if (id != props.requestedId) {
+            // history.replace(`/post/${id}`)
+            history.push(`/post/${id}`)
+        }
     }
     const goToProfile = () => {
         if (window.location.pathname !== `/profile/${props.post.poster.id}`) {
-
             history.push(`/profile/${props.post.poster.id}`)
         }
     }
@@ -71,86 +73,70 @@ export default function PostView(props: { post: Post, compressed?: boolean }) {
             history.push(`/create/post/${props.post.id}/true`)
         }
     }
-    useEffect(() => {
-        // Run! Like go get some data from an API.
-        if (!requestSent && (props.compressed ? false : true)) {
-            setRequestSent(true)
-            fetch(`/api/post/comment?id=${props.post.id}&size=10&offset=0&depth=3`, {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'jwt': App.auth
-                },
-            }).then(res => {
-                return res.json();
-            }).then(comments => {
-                setComments(comments)
-                // console.log(post)
-            });
-        }
-    });
     return (
-        <div>
-            < Card className={classes.root} >
-                <CardHeader
-                    avatar={
+        <div >
+            <div onClick={() => { goToPost(props.post.id) }}>
+                < Card className={classes.root} >
+                    <CardHeader
+                        avatar={
 
-                        <Tooltip title={`${props.post.poster.first} ${props.post.poster.last}`}>
-                            <Avatar aria-label="recipe" className={classes.large} src={props.post.poster.profilepicuri} alt={`Profile image for ${props.post.poster.first} ${props.post.poster.last} `}>
-                            </Avatar>
-                        </Tooltip>
-                    }
-
-                    title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.poster.first} ${props.post.poster.last} `}</Typography></Link> {props.post.title}</div>}
-                    subheader={moment(props.post.createdAt).fromNow()}
-                />
-                <CardContent>
-                    <div className={classes.content} style={props.compressed ? { maxHeight: 200 } : {}}>
-                        {props.post.content.split('\n').map((i) => {
-                            return (<Typography>
-                                {i}
-                            </Typography>)
-                        })}
-                    </div>
-                    {props.post.sharedContent ? <div><br />< Card raised={true} className={classes.root} >
-                        <CardHeader
-                            avatar={
-
-                                <Tooltip title={`${props.post.sharedContent?.poster.first} ${props.post.poster.last} `}>
-                                    <Avatar aria-label="recipe" className={classes.large} src={props.post.sharedContent?.poster.profilepicuri} alt={`Profile image for ${props.post.sharedContent?.poster.first} ${props.post.sharedContent?.poster.last} `}>
-                                    </Avatar>
-                                </Tooltip>
-                            }
-
-                            title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.sharedContent?.poster.first} ${props.post.poster.last} `}</Typography></Link> <Link onClick={goToProfile}>{props.post.sharedContent?.title}</Link></div>}
-                            subheader={moment(props.post.sharedContent?.createdAt).fromNow()}
-                        />
-                        <CardContent>
-                            <Typography className={classes.content}>
-                                {props.post.sharedContent?.content}
-                            </Typography>
-                        </CardContent>
-                        <CardActions>
-                        </CardActions>
-                    </Card > </div> : <div></div>}
-                </CardContent>
-                {props.compressed ? <div /> :
-                    < CardActions className={classes.floatRight}>
-                        {
-                            props.post.sharedContent ? <></> : <IconButton onClick={sharePost}><ShareIcon /></IconButton>
+                            <Tooltip title={`${props.post.poster.first} ${props.post.poster.last}`}>
+                                <Avatar aria-label="recipe" className={classes.large} src={props.post.poster.profilepicuri} alt={`Profile image for ${props.post.poster.first} ${props.post.poster.last} `}>
+                                </Avatar>
+                            </Tooltip>
                         }
-                    </CardActions>
-                }
-            </Card >
-            {(props.compressed && comments) ?
+
+                        title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.poster.first} ${props.post.poster.last} `}</Typography></Link> {props.post.title}</div>}
+                        subheader={moment(props.post.createdAt).fromNow()}
+                    />
+                    <CardContent>
+                        <div className={classes.content} style={props.compressed ? { maxHeight: 200 } : { maxHeight: 500 }}>
+                            {props.post.content.split('\n').map((i) => {
+                                return (<Typography>
+                                    {i}
+                                </Typography>)
+                            })}
+                        </div>
+                        {props.post.sharedContent ? <div><br />< Card raised={true} className={classes.root} >
+                            <CardHeader
+                                avatar={
+
+                                    <Tooltip title={`${props.post.sharedContent?.poster.first} ${props.post.poster.last} `}>
+                                        <Avatar aria-label="recipe" className={classes.large} src={props.post.sharedContent?.poster.profilepicuri} alt={`Profile image for ${props.post.sharedContent?.poster.first} ${props.post.sharedContent?.poster.last} `}>
+                                        </Avatar>
+                                    </Tooltip>
+                                }
+
+                                title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.sharedContent?.poster.first} ${props.post.poster.last} `}</Typography></Link> <Link onClick={goToProfile}>{props.post.sharedContent?.title}</Link></div>}
+                                subheader={moment(props.post.sharedContent?.createdAt).fromNow()}
+                            />
+                            <CardContent>
+                                <Typography className={classes.content}>
+                                    {props.post.sharedContent?.content}
+                                </Typography>
+                            </CardContent>
+                            <CardActions>
+                            </CardActions>
+                        </Card > </div> : <div></div>}
+                    </CardContent>
+                    {props.compressed ? <div /> :
+                        < CardActions className={classes.floatRight}>
+                            {
+                                props.post.sharedContent ? <></> : <IconButton onClick={sharePost}><ShareIcon /></IconButton>
+                            }
+                        </CardActions>
+                    }
+                </Card >
+            </div>
+            {(comments) ?
                 comments.map((element: any) =>
                     <div onClick={() => { goToPost(element.id) }}>
                         <Comment post={element} />
+                        test
                     </div>
                 ) : <div />}
             {props.post.comments ?
-                props.post.comments[0].root ? <Comment post={props.post.comments[0]} />
+                !props.post.comments[0].root ? <Comment post={props.post.comments[0]} />
                     : <div />
                 : <div />}
         </div >

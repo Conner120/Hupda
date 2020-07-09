@@ -17,7 +17,6 @@ import Profile from './stores/ProfileState';
 const Routes = () => {
     let history = useHistory();
     const { App } = useStores()
-    console.log(Cookies.get('jwt'))
     if (Cookies.get('jwt')) {
         App.auth = (Cookies.get('jwt') ? Cookies.get('jwt') : '') as string
     } else {

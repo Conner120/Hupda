@@ -14,6 +14,7 @@ import moment from 'moment';
 import ShareIcon from '@material-ui/icons/Share';
 import { useHistory } from "react-router-dom";
 import { Link, IconButton } from '@material-ui/core';
+import { Post as PostComp } from '../../components'
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
@@ -77,7 +78,7 @@ export default function Comment(props: { post: Post, compressed?: boolean }) {
     return (
         <div className={classes.root}>
             <Card variant="outlined">
-                dsds
+                <PostComp post={props.post} ></PostComp>
             </Card>
         </div >
     )

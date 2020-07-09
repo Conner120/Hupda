@@ -4,7 +4,9 @@ const passport = require('passport');
 const Sequelize = require('sequelize');
 const jwt = require('jsonwebtoken');
 var azure = require('azure-storage');
+var Sentiment = require('sentiment');
 require('../config/passport.js')(passport);
+var sentiment = new Sentiment();
 const { user, profile, postMedia, share, comment, post, reaction } = require('../models');
 var blobService = azure.createBlobService('scouthub', 'Xwf+aWpa4rAz9hrbGkJMMUo3tGXFqNJYg/Up05Uz3M180GwAvepo3QqfMmzEnIGwpZLVlvN8FnhyjurH5HnJdg==');
 const { v4 } = require('uuid');
@@ -12,8 +14,10 @@ const { v4 } = require('uuid');
 const { Op } = require("sequelize");
 const e = require('express');
 const redis = require('redis');
+const RedisGraph = require("redisgraph.js").Graph;
+var subjects = require("subject-extractor")
 
-const cache = redis.createClient(32771, 'localhost');
+let ActivityTrack = new RedisGraph("ActivityTrack", 'localhost', 6379);
 
 // middleware that is specific to this router
 router.use(function timeLog(req, res, next) {
@@ -47,6 +51,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
     };
     if (!requestedPost) {
         requestedPost = await share.findOne({ where: { id: req.query.id }, include: [{ model: post, as: 'sharedContent', include: [{ model: profile, as: 'poster' }] }, { model: profile, as: 'poster' }] })
+        requestedPost.dataValues.root = true
         if (requestedPost) {
             if ((new Date() - new Date(requestedPost.sharedContent.updatedAt)) > 30000) {
                 requestedPost.sharedContent.update({
@@ -115,10 +120,10 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
                 commentCount: await comment.count({ where: { postId: requestedPost.id } })
             });
         }
-        if (requestedPost.root) {
+        if (!requestedPost.dataValues.root) {
             let rootPostId = (await comment.findOne({ where: { commentId: requestedPost.id } })).postId
             requestedPost.dataValues.rootPost = await post.findOne({ where: { id: rootPostId }, include: [{ model: profile, as: 'poster' }, { model: postMedia, as: 'media' }] })
-            console.log(await post.findOne({ where: { id: rootPostId }, include: [{ model: profile, as: 'poster' }, { model: postMedia, as: 'media' }] }))
+            requestedPost.dataValues.rootPost.poster.dataValues.profilepicuri = blobService.getUrl("profilemedia", `${requestedPost.dataValues.rootPost.poster.id}.png`);
         }
     }
     if (requestedPost) {
@@ -253,81 +258,63 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
         res.send(404, 'not found')
     }
 })
-// router.get('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-//     const puid = (await req.user.getProfile()).userId
-//     let requestedPost = await post.findOne({ where: { id: req.query.id }, include: [{ model: profile, as: 'poster' }] })
-//     if (requestedPost) {
+router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    let media = []
+    let pid = (await req.user.getProfile()).id
+    let postId = v4()
+    var startDate = new Date();
+    var expiryDate = new Date(startDate);
+    expiryDate.setMinutes(startDate.getMinutes() + 120);
+    startDate.setMinutes(startDate.getMinutes() - 1);
+    var sharedAccessPolicy = {
+        AccessPolicy: {
+            Permissions: azure.BlobUtilities.SharedAccessPermissions.WRITE,
+            Start: startDate,
+            Expiry: expiryDate
+        }
+    };
+    let createdPost = await post.create({
+        id: postId,
+        title: req.body.title,
+        content: req.body.content,
+        profileId: pid,
+        alc: req.body.alc,
+    })
+    await asyncForEach(req.body.media, async (x) => {
+        x.id = v4();
+        let token = blobService.generateSharedAccessSignature("postmedia", `${x.id}.${x.filetype}`, sharedAccessPolicy);
+        let uri = blobService.getUrl("postmedia", `${x.id}.${x.filetype}`, token);
+        media.push({ id: x.id, uri, description: x.description, acl: req.body.acl, profileId: pid, postId })
+        await postMedia.create({ id: x.id, type: x.filetype, description: x.description, acl: req.body.acl, profileId: pid, postId })
+    })
+    createdPost.dataValues.media = media;
+    res.send(createdPost)
 
-//         switch (requestedPost.dataValues.alc) {
-//             case 0:
-//                 if (requestedPost.poster.userId === req.user.id) {
-//                     requestedPost.update({
-//                         impressions: (parseInt(requestedPost.impressions) + 1)
-//                     })
-//                     res.send(requestedPost)
-//                 } else {
-//                     res.send(300, 'not valid access')
-//                 }
-//                 break;
-//             case 1:
-//                 const friends = (await (requestedPost.poster).getFriends())
-//                 if (friends.some(x => x.id === req.user.id) || requestedPost.poster.userId === req.user.id) {
-//                     let fids = friends.map(x => x.id);
-//                     requestedPost.dataValues.reaction = await reaction.findAll({
-//                         where: {
-//                             postId: req.query.id,
-//                             profileId: {
-//                                 [Op.or]: fids,
-//                                 [Op.or]: pid
-//                             }
-//                         }
-//                     })
-//                     requestedPost.update({
-//                         impressions: (parseInt(requestedPost.impressions) + 1)
-//                     })
-//                     res.send(requestedPost)
-//                 } else {
-//                     res.send(300, 'not valid access')
-//                 }
-//                 break;
-//             case 2:
-//                 let friendsoffriends = (await (requestedPost.poster).getFriends())
-//                 let fri = [...friendsoffriends];
-//                 await asyncForEach(friendsoffriends, async (x) => {
-//                     let t = await x.getFriends()
-//                     fri.push(t)
-//                 });
-//                 fri = fri.flat()
-//                 if (fri.some(x => x.userId === req.user.id) || puid === req.user.id) {
-//                     let fids = fri.map(x => x.id);
-//                     requestedPost.dataValues.reaction = await reaction.findAll({
-//                         where: {
-//                             postId: req.query.id,
-//                             profileId: {
-//                                 [Sequelize.Op.in]: fids
-//                             },
-//                         }
-//                     })
-//                     requestedPost.update({
-//                         impressions: (parseInt(requestedPost.impressions) + 1)
-//                     })
-//                     res.send(requestedPost)
-//                 } else {
-//                     res.send(300, 'not valid access')
-//                 }
-//                 break;
-//             case 3:
-//                 res.send(200, 'yet to be implemented')
-//                 break;
-//             case 4:
-//                 requestedPost.update({
-//                     impressions: (parseInt(requestedPost.impressions) + 1)
-//                 })
-//                 res.send(requestedPost)
-//                 break;
-//         }
-//     }
-// })
+    subjects.extractAll(req.body.content.slice(0, 1000)).forEach(async (word) => {
+        if ((!word.includes("'")) || (!word.includes('"'))) {
+            try {
+
+                let current = await ActivityTrack.query(`MATCH (a {name:'${word}'}) return a`)
+                console.log(word)
+                if (current._resultsCount > 0) {
+                    current = current.next().get('a')
+                    let p = parseInt(current.properties.PScore) | 0
+                    if (p) {
+                        p = p + 1
+                    } else {
+                        p = 1
+                    }
+                    await ActivityTrack.query(`MATCH (n {name:'${word}'}) SET n.PScore = ${p}`);
+                } else {
+                    await ActivityTrack.query(`CREATE(: topic{ name: '${word}', PScore: '0', SScore: '${sentiment.analyze(word).score}' })`);
+                }
+            } catch (e) {
+
+            }
+        }
+    })
+})
+
 router.post('/share', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const puid = (await req.user.getProfile()).userId
     const requestedPost = await post.findOne({ where: { id: req.body.id }, include: [{ model: profile, as: 'poster' }] })
@@ -412,48 +399,7 @@ router.post('/delete', passport.authenticate('jwt', { session: false }), async (
     }
 })
 // define the about route
-router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    let media = []
-    let pid = (await req.user.getProfile()).id
-    let postId = v4()
-    var startDate = new Date();
-    var expiryDate = new Date(startDate);
-    expiryDate.setMinutes(startDate.getMinutes() + 120);
-    startDate.setMinutes(startDate.getMinutes() - 1);
-    var sharedAccessPolicy = {
-        AccessPolicy: {
-            Permissions: azure.BlobUtilities.SharedAccessPermissions.WRITE,
-            Start: startDate,
-            Expiry: expiryDate
-        }
-    };
-    let createdPost = await post.create({
-        id: postId,
-        title: req.body.title,
-        content: req.body.content,
-        profileId: pid,
-        alc: req.body.alc,
-    })
-    await asyncForEach(req.body.media, async (x) => {
-        x.id = v4();
-        let token = blobService.generateSharedAccessSignature("postmedia", `${x.id}.${x.filetype}`, sharedAccessPolicy);
-        let uri = blobService.getUrl("postmedia", `${x.id}.${x.filetype}`, token);
-        media.push({ id: x.id, uri, description: x.description, acl: req.body.acl, profileId: pid, postId })
-        await postMedia.create({ id: x.id, type: x.filetype, description: x.description, acl: req.body.acl, profileId: pid, postId })
-    })
-    req.body.content.split(' ').forEach((word) => {
-        let wc = cache.get(word, (err, reply) => {
-            if (reply) {
-                cache.set(word, (parseInt(reply) + 1))
-            } else {
-                cache.set(word, 1)
-            }
-        })
-    })
 
-    createdPost.dataValues.media = media;
-    res.send(createdPost)
-})
 router.post('/reaction', passport.authenticate('jwt', { session: false }), async (req, res) => {
     let requestedPost = await post.findOne({ where: { id: req.body.id }, include: [{ model: comment, as: 'comments', include: [{ model: post, as: 'comment' }] }, { model: profile, as: 'poster' }] })
     if (requestedPost) {

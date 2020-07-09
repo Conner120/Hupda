@@ -10,17 +10,30 @@ module.exports = function (passport) {
     secretOrKey: 'ConnerRocks',
   };
   passport.use('jwt', new JwtStrategy(opts, ((jwt_payload, done) => {
-    console.log(jwt_payload)
     user
       .findByPk(jwt_payload.id)
       .then((user) => done(null, user))
       .catch((error) => done(error, false));
   })));
 };
+function getCookie(cname, req) {
+  var name = cname + "=";
+  var ca = req.headers.cookie.split(';');
+  for (var i = 0; i < ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
 var cookieExtractor = function (req) {
   let token = null;
   if (req.headers.jwt == null) {
-    if (req && req.cookies) { token = req.cookies.jwt; }
+    if (req && req.headers.cookie) { token = getCookie('jwt', req) }
   }
   else {
     token = req.headers.jwt

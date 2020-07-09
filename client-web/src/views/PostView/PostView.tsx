@@ -7,8 +7,7 @@ export default function PostView() {
     let [post, setPost] = useState()
     let [requestSent, setRequestSent] = useState(false)
     const { App } = useStores()
-
-    console.log(App.auth)
+    let [requestedId, setRequestedId] = useState(id)
     useEffect(() => {
         // Run! Like go get some data from an API.
         if (!requestSent) {
@@ -23,20 +22,43 @@ export default function PostView() {
             }).then(res => {
                 return res.json();
             }).then(post => {
-                if (post.rootPost) {
+                if (!post.root) {
                     let tempPost = post.rootPost
                     tempPost.comments = [post]
-                    console.log(tempPost)
+                    setPost(tempPost)
+                } else {
+                    let tempPost = post
                     setPost(tempPost)
                 }
-                // setPost(post)
-                // console.log(post)
             });
+        } else {
+            if (requestedId != id) {
+                setRequestedId(id)
+                fetch(`/api/post?id=${id}&comments=true`, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'jwt': App.auth
+                    },
+                }).then(res => {
+                    return res.json();
+                }).then(post => {
+                    if (!post.root) {
+                        let tempPost = post.rootPost
+                        tempPost.comments = [post]
+                        setPost(tempPost)
+                    } else {
+                        let tempPost = post
+                        setPost(tempPost)
+                    }
+                });
+            }
         }
     });
     return (
         <div>
-            {(post) ? <Post post={post} compressed={(post.comments[0].rootPost ? false : true)} /> : <h3>loading</h3>}
+            {(post) ? <Post post={post} compressed={false} requestedId={id} /> : <h3>loading</h3>}
         </div>
     )
 }
