@@ -1,22 +1,20 @@
-var vfile = require('to-vfile')
-var retext = require('retext')
-var pos = require('retext-pos')
-var keywords = require('retext-keywords')
-var toString = require('nlcst-to-string')
+const { EnglishTokenizer, KeywordExtractor } = require("@agtabesh/keyword-extractor")
+const documents = [
+    'Austria will press ahead with a proposed tax on internet giants after plans for an European Union-wide levy fell through this week, Finance Minister Hartwig Loeger said on Friday.',
+]
 
-retext()
-    .use(pos) // Make sure to use `retext-pos` before `retext-keywords`.
-    .use(keywords, { maximum: 2 })
-    .process(vfile.readSync('example.txt'), done)
+const tokenizer = new EnglishTokenizer()
+const keywordExtractor = new KeywordExtractor()
+keywordExtractor.setTokenizer(tokenizer)
 
-function done(err, file) {
-    if (err) throw err
+// documents.forEach((text, i) => {
+//     keywordExtractor.addDocument(i, text)
+// })
 
-    console.log('Key-phrases:')
-    file.data.keyphrases.forEach(function (phrase) {
-        console.log(phrase.matches[0].nodes.map(stringify).join(''))
-        function stringify(value) {
-            return toString(value)
-        }
-    })
-}
+const randomDocument = documents[Math.floor(Math.random() * documents.length)]
+const keywords = keywordExtractor.extractKeywords(randomDocument, {
+    sortByScore: true,
+    limit: 10
+})
+
+console.log(keywords)

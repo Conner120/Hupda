@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@agtabesh/keyword-extractor": "^1.1.1",
+    "keyword-context": "^1.0.0",
     "retext": "^7.0.1",
     "retext-keywords": "^6.0.0",
     "retext-pos": "^3.0.0",
