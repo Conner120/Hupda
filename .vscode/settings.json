@@ -1,5 +1,11 @@
 {
     "cSpell.words": [
         "HUPDA"
-    ]
+    ],
+    "azureFunctions.deploySubpath": "apollo-example",
+    "azureFunctions.postDeployTask": "npm install",
+    "azureFunctions.projectLanguage": "JavaScript",
+    "azureFunctions.projectRuntime": "~3",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.preDeployTask": "npm prune"
 }

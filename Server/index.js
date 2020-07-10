@@ -36,7 +36,11 @@ app.use('/graphql', (req, res, next) => {
         if (user) {
             next()
         } else {
-            res.send({ errors: [{ message: "Unauthorized" }] })
+            if (req.method == "POST") {
+                res.send({ errors: [{ message: "Unauthorized" }] })
+            } else {
+                next()
+            }
         }
     })(req, res, next)
 })
@@ -212,3 +216,4 @@ var cookieExtractor = function (req) {
 app.listen(4000 || process.env.PORT, () => {
     console.log(`🚀 Server ready at http://localhost:4000`)
 })
+module.exports = app
