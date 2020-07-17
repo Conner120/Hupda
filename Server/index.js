@@ -3,25 +3,29 @@ let path = require('path')
 let app = express()
 const passport = require('passport');
 const Sequelize = require('sequelize');
+const { decodedToken } = require('./Helper')
 const jwt = require('jsonwebtoken');
 require('./config/passport.js')(passport);
 const cookieParser = require('cookie-parser');
 const logResponseTime = require("./response-time-logger");
-const { user, profile } = require('./models');
+const db = require('./models');
 const { post } = require('./routes')
 const typeDefs = require("./graphql/Types");
 const resolvers = require("./Graphql/Resolvers/");
-const { ApolloServer, gql } = require("apollo-server-express");
+let { ApolloServer, gql } = require("apollo-server");
 const profileRouter = require('./routes/profile')
 var compression = require('compression')
-var graphqlHTTP = require('express-graphql').graphqlHTTP;
 var { buildSchema } = require('graphql');
 app.use(express.json())
 app.use(logResponseTime);
 app.use('/api/post', post)
 authSecret = "ConnerRocks"
 app.use('/api/profile', profileRouter)
+const expressPlayground = require('graphql-playground-middleware-express')
+    .default
 
+
+app.get('/playground', expressPlayground({ endpoint: '/graphql' }))
 // app.use(express.static('public'))
 app.use(compression({ filter: shouldCompress }))
 // const server = new ApolloServer({
@@ -44,13 +48,30 @@ app.use('/graphql', (req, res, next) => {
         }
     })(req, res, next)
 })
-app.use('/graphql', graphqlHTTP({
-    schema: buildSchema(typeDefs),
-    rootValue: resolvers,
-    graphiql: {
-        headerEditorEnabled: true
-    }
-}))
+// const server = new ApolloServer({
+//     typeDefs: gql(typeDefs),
+//     resolvers,
+//     subscriptionsEndpoint: `ws://localhost:3000/subscriptions`,
+
+//     context: (req) => {
+//         return req
+//     }
+// });
+// server.applyMiddleware({ app });
+
+// app.use('/graphql', ApolloServer({
+//     typeDefs: gql(typeDefs),
+//     resolvers,
+//     graphiql: {
+//         headerEditorEnabled: true
+//     },
+//     subscriptions: {
+//         onConnect: (connectionParams, webSocket) => {
+//             // var decoded = jwt.verify(webSocket.upgradeReq.headers.cookie., 'wrong-secret');
+//             console.log(webSocket.upgradeReq.headers.cookie)
+//         }
+//     },
+// }))
 
 // Construct a schema, using GraphQL schema language
 function shouldCompress(req, res) {
@@ -213,7 +234,27 @@ var cookieExtractor = function (req) {
     if (req && req.cookies) token = req.cookies.jwt;
     return token;
 };
-app.listen(4000 || process.env.PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:4000`)
-})
-module.exports = app
+// app.listen(4000 || process.env.PORT, () => {
+//     console.log(`🚀 Server ready at http://localhost:4000`)
+
+// })
+const server = new ApolloServer({
+    typeDefs: gql(typeDefs),
+    resolvers,
+    tracing: true,
+
+    subscriptionsEndpoint: `ws://localhost:4000/subscriptions`,
+
+    context: async (req) => ({
+        db,
+        req: req.req,
+        profile: await decodedToken(req.req)
+
+    })
+});
+// server.applyMiddleware({ app });
+
+server.listen().then(({ url, subscriptionsUrl, subscriptionsPath }) => {
+    console.log(`🚀  Server ready at ${url}`);
+    console.log(`realtime here at ${subscriptionsUrl} and path ${subscriptionsPath}`)
+});

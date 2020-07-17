@@ -1,6 +1,5 @@
 /* jshint indent: 1 */
-var uuid = require('uuid');
-
+var uuid = require('uuid')
 module.exports = function (sequelize, DataTypes) {
     const post = sequelize.define('post', {
         id: {

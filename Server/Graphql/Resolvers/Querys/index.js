@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-let scheme = ''
+let scheme = {}
 const basename = path.basename(__filename);
 
 let l = fs
@@ -9,16 +9,12 @@ let l = fs
     .filter(file => {
         return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
     })
+console.log(l)
 for (let index = 0; index < l.length; index++) {
     const element = l[index];
-    const model = require(path.join(__dirname, element));
-    scheme += model
+    console.log(element)
+    scheme[element.toString().split('.')[0]] = require(path.join(__dirname, element));
 }
-scheme += require('./query')
-scheme += require('./sub')
-scheme += require('./mutators')
-scheme += require('./enum')
-
 console.log(scheme)
 module.exports = scheme
 

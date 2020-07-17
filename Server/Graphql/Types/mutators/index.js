@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-let scheme = ''
+let scheme = `type Mutation {`
 const basename = path.basename(__filename);
 
 let l = fs
@@ -14,11 +14,7 @@ for (let index = 0; index < l.length; index++) {
     const model = require(path.join(__dirname, element));
     scheme += model
 }
-scheme += require('./query')
-scheme += require('./sub')
-scheme += require('./mutators')
-scheme += require('./enum')
 
-console.log(scheme)
-module.exports = scheme
+module.exports = scheme + `}
+`
 

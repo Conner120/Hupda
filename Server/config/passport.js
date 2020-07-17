@@ -2,7 +2,7 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const { ExtractJwt } = require('passport-jwt');
 
 // load up the user model
-const { user } = require('../models');
+const { profile } = require('../models');
 
 module.exports = function (passport) {
   const opts = {
@@ -10,10 +10,7 @@ module.exports = function (passport) {
     secretOrKey: 'ConnerRocks',
   };
   passport.use('jwt', new JwtStrategy(opts, ((jwt_payload, done) => {
-    user
-      .findByPk(jwt_payload.id)
-      .then((user) => done(null, user))
-      .catch((error) => done(error, false));
+    profile.findOne({ where: { user_id: jwt_payload.id } }).then((user) => done(null, user)).catch((error) => done(error, false));
   })));
 };
 function getCookie(cname, req) {

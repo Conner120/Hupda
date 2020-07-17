@@ -3,11 +3,11 @@ var router = express.Router()
 const passport = require('passport');
 const Sequelize = require('sequelize');
 const jwt = require('jsonwebtoken');
-var azure = require('azure-storage');
 var Sentiment = require('sentiment');
 require('../config/passport.js')(passport);
 var sentiment = new Sentiment();
 const { user, profile, postMedia, share, comment, post, reaction } = require('../models');
+var azure = require('azure-storage');
 var blobService = azure.createBlobService('scouthub', 'Xwf+aWpa4rAz9hrbGkJMMUo3tGXFqNJYg/Up05Uz3M180GwAvepo3QqfMmzEnIGwpZLVlvN8FnhyjurH5HnJdg==');
 const { v4 } = require('uuid');
 // const redis = require('redis');
