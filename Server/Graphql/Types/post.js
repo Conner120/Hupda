@@ -6,6 +6,7 @@ type Post {
     poster: Profile
     alc: Int
     visible: String
+    reactions: ReactionMeta
     root: Boolean
 }
 `;

@@ -4,6 +4,6 @@ module.exports = `
         like
         dislike
         thanks
-        good job
+        goodjob
     }
 `;

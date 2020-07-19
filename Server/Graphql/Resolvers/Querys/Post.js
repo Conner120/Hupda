@@ -13,6 +13,10 @@ var sharedAccessPolicy = {
         Expiry: expiryDate
     }
 };
+const redis = require('redis');
+const Post = require('../Querys/Post');
+const RedisGraph = require("redisgraph.js").Graph;
+let PostMeta = new RedisGraph("PostMeta", 'localhost', 6379);
 module.exports = async (root, args, { req, db, profile }, info) => {
     const post = await db.post.findOne({ where: { id: args.id }, include: [{ model: db.profile, as: 'poster', attributes: ['first', 'last', 'userId', 'id', 'alc'] }] })
     post.poster.profilePicURI = getProfilePicture(post.poster.id)
@@ -26,6 +30,12 @@ module.exports = async (root, args, { req, db, profile }, info) => {
         } else {
             let token = blobService.generateSharedAccessSignature("profilemedia", `${post.poster.id}_current.png`, sharedAccessPolicy);
             post.poster.dataValues.profilePicURI = blobService.getUrl("profilemedia", `${post.poster.id}_current.png`, token);
+        }
+        let current = await PostMeta.query(`MATCH (a {id:'${args.id}'}) return a`)
+        if (current._resultsCount > 0) {
+            current = current.next().get('a')
+            console.log(current)
+            post.reactions = current.properties
         }
         return post
     } else {

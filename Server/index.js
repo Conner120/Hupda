@@ -248,7 +248,7 @@ const server = new ApolloServer({
     context: async (req) => ({
         db,
         req: req.req,
-        profile: await decodedToken(req.req)
+        profile: (req.req) ? await decodedToken(req.req) : {}
 
     })
 });

@@ -1,24 +1,28 @@
 var { pubsub, types } = require('../pubsub');
-const db = require('../../../models');
-const { decodedToken } = require('../../../Helper')
 const { getProfilePicture, isAuthorizedFor, getALCString } = require('../../../Helper')
-var azure = require('azure-storage');
-var blobService = azure.createBlobService('scouthub', 'Xwf+aWpa4rAz9hrbGkJMMUo3tGXFqNJYg/Up05Uz3M180GwAvepo3QqfMmzEnIGwpZLVlvN8FnhyjurH5HnJdg==');
-var startDate = new Date();
-var expiryDate = new Date(startDate);
-expiryDate.setHours(0, 0, 0, 0);
-startDate.setHours(23, 59, 59, 999)
-var sharedAccessPolicy = {
-    AccessPolicy: {
-        Permissions: azure.BlobUtilities.SharedAccessPermissions.READ,
-        Start: startDate,
-        Expiry: expiryDate
+const redis = require('redis');
+const Post = require('../Querys/Post');
+const RedisGraph = require("redisgraph.js").Graph;
+let PostMeta = new RedisGraph("PostMeta", 'localhost', 6379);
+module.exports = async (root, args, { req, db, profile }, info) => {
+    let current = await PostMeta.query(`MATCH (a {id:'${args.postId}'}) return a`)
+    if (current._resultsCount > 0) {
+        current = current.next().get('a')
+        await PostMeta.query(`MATCH (n {id:'${args.postId}'}) set n.${args.type} = '${parseInt(current.properties[args.type] | 0) + 1}'`);
+    } else {
+        await PostMeta.query(`CREATE(: reactionMeta{ id: $id, love: $love, like: $like, dislike:$dislike,thanks:$thanks,goodjob: $goodjob })`, {
+            id: '427b8f9b-7bf4-47c8-ada8-4083ec4d31d7',
+            love: (args.type === 'love') | 0, like: (args.type === 'like') | 0,
+            dislike: (args.type === 'dislike') | 0, thanks: (args.type === 'thanks') | 0,
+            goodjob: (args.type === 'good job') | 0
+        });
     }
-};
-module.exports = async (root, args, { req }, info) => {
-    const profile = await decodedToken(req);
+    if (args.type === 'goodjob') {
+        args.type = 'good job'
+    }
     return (await db.reaction.create({
-        ...args,
+        postId: args.postId,
+        reactionType: args.type,
         profileId: profile.id
     }))
 }

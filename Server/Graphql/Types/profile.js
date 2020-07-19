@@ -11,31 +11,3 @@ type Profile {
     profilePicURI: String
 }
 `;
-// module.exports = `
-//     type User {
-//         id: String!
-//         username: String!
-//         profile: Profile
-//     }
-
-//     type Post {
-//         id: String
-//         title: String
-//         content: String
-//         poster: Profile
-//         alc: Int
-//         visible: String
-//         root: Boolean
-//     }
-//     type Settings { 
-//         notifications:String
-//     }
-//     type Query {
-//         Account: User
-//         Post(id:String): Post
-//     }
-
-// `;
-// // type Mutation {
-
-// // }
