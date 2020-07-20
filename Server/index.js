@@ -41,7 +41,7 @@ app.use('/graphql', (req, res, next) => {
             next()
         } else {
             if (req.method == "POST") {
-                res.send({ errors: [{ message: "Unauthorized" }] })
+                // res.send({ errors: [{ message: "Unauthorized" }] })
             } else {
                 next()
             }

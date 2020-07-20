@@ -1,0 +1,20 @@
+{
+  "name": "hupda",
+  "version": "1.0.0",
+  "description": "",
+  "main": "Server/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon Server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Conner120/Hupda.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Conner120/Hupda/issues"
+  },
+  "homepage": "https://github.com/Conner120/Hupda#readme"
+}

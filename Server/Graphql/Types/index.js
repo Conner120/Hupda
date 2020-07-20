@@ -15,7 +15,7 @@ for (let index = 0; index < l.length; index++) {
     scheme += model
 }
 scheme += require('./query')
-scheme += require('./sub')
+// scheme += require('./sub')
 scheme += require('./mutators')
 scheme += require('./enum')
 

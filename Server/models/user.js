@@ -20,12 +20,14 @@ module.exports = (sequelize, DataTypes) => {
         }
     });
     user.prototype.comparePassword = function (passw, cb) {
-        bcrypt.compare(passw, this.password, function (err, isMatch) {
-            if (err) {
-                return cb(err);
-            }
-            cb(null, isMatch);
-        });
+        return new Promise((resolve, reject) => {
+            bcrypt.compare(passw, this.password, function (err, isMatch) {
+                if (err) {
+                    reject(err)
+                }
+                resolve(isMatch)
+            });
+        })
     };
     user.associate = function (models) {
         user.hasOne(models.profile, { foreignKey: 'user_id' })
