@@ -9,15 +9,26 @@ const decodedToken = (req, requireAuth = true) => {
 
         if (header) {
             const token = header.replace('jwt ', '');
-            const decoded = jwt.verify(token, 'ConnerRocks');
-            const profile = await db.profile.findOne({ where: { userId: decoded.id } })
-            if (!profile) {
-                reject('Login in to access resource');
-            } else {
-                resolve(profile)
+            let decoded = {}
+            try {
+                decoded = jwt.verify(token, 'ConnerRocks');
+                const profile = await db.profile.findOne({ where: { userId: decoded.id } })
+                if (!profile) {
+                    reject('Login in to access resource');
+                } else {
+                    resolve(profile)
+                }
+            } catch (e) {
+                resolve()
             }
+
         } else {
-            reject('Login in to access resource');
+            if (requireAuth) {
+                reject('Login in to access resource');
+
+            } else {
+                resolve(false)
+            }
         }
     })
 }

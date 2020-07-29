@@ -9,6 +9,7 @@ import Typography from '@material-ui/core/Typography';
 import CardHeader from '@material-ui/core/CardHeader';
 import Avatar from '@material-ui/core/Avatar';
 import Tooltip from '@material-ui/core/Tooltip';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { useStores } from '../../../stores'
 import { Comment } from '../../../components'
 import moment from 'moment';
@@ -51,7 +52,7 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export default function PostView(props: { post: Post, compressed?: boolean, requestedId?: string }) {
+export default function PostView(props: { post: Post, compressed?: boolean, requestedId?: string, showEnlarge?: boolean }) {
     const classes = useStyles();
     let [comments, setComments] = useState()
     let [requestSent, setRequestSent] = useState(false)
@@ -62,6 +63,9 @@ export default function PostView(props: { post: Post, compressed?: boolean, requ
             // history.replace(`/post/${id}`)
             history.push(`/post/${id}`)
         }
+    }
+    const goToPostInNew = (id: string) => {
+        history.push(`/post/${id}`)
     }
     const goToProfile = () => {
         if (window.location.pathname !== `/profile/${props.post.poster.id}`) {
@@ -75,20 +79,24 @@ export default function PostView(props: { post: Post, compressed?: boolean, requ
     }
     return (
         <div >
-            <div onClick={() => { goToPost(props.post.id) }}>
+            <div>
                 < Card className={classes.root} >
                     <CardHeader
                         avatar={
 
                             <Tooltip title={`${props.post.poster.first} ${props.post.poster.last}`}>
-                                <Avatar aria-label="recipe" className={classes.large} src={props.post.poster.profilepicuri} alt={`Profile image for ${props.post.poster.first} ${props.post.poster.last} `}>
+                                <Avatar aria-label="recipe" className={classes.large} src={props.post.poster.profilePicURI} alt={`Profile image for ${props.post.poster.first} ${props.post.poster.last} `}>
                                 </Avatar>
                             </Tooltip>
+
                         }
 
-                        title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.poster.first} ${props.post.poster.last} `}</Typography></Link> {props.post.title}</div>}
+                        title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.poster.first} ${props.post.poster.last} `}</Typography></Link> {props.post.title}
+                            <div className={classes.floatRight}>{props.showEnlarge ? <IconButton onClick={() => { goToPostInNew(props.post.id) }}> <OpenInNewIcon /></IconButton> : <div />}</div></div>}
                         subheader={moment(props.post.createdAt).fromNow()}
-                    />
+                    >
+
+                    </CardHeader>
                     <CardContent>
                         <div className={classes.content} style={props.compressed ? { maxHeight: 200 } : { maxHeight: 500 }}>
                             {props.post.content.split('\n').map((i) => {
@@ -102,7 +110,7 @@ export default function PostView(props: { post: Post, compressed?: boolean, requ
                                 avatar={
 
                                     <Tooltip title={`${props.post.sharedContent?.poster.first} ${props.post.poster.last} `}>
-                                        <Avatar aria-label="recipe" className={classes.large} src={props.post.sharedContent?.poster.profilepicuri} alt={`Profile image for ${props.post.sharedContent?.poster.first} ${props.post.sharedContent?.poster.last} `}>
+                                        <Avatar aria-label="recipe" className={classes.large} src={props.post.sharedContent?.poster.profilePicURI} alt={`Profile image for ${props.post.sharedContent?.poster.first} ${props.post.sharedContent?.poster.last} `}>
                                         </Avatar>
                                     </Tooltip>
                                 }
@@ -128,17 +136,21 @@ export default function PostView(props: { post: Post, compressed?: boolean, requ
                     }
                 </Card >
             </div>
-            {(comments) ?
-                comments.map((element: any) =>
-                    <div onClick={() => { goToPost(element.id) }}>
-                        <Comment post={element} />
+            {
+                (comments) ?
+                    comments.map((element: any) =>
+                        <div onClick={() => { goToPost(element.id) }}>
+                            <Comment post={element} />
                         test
                     </div>
-                ) : <div />}
-            {props.post.comments ?
-                !props.post.comments[0].root ? <Comment post={props.post.comments[0]} />
+                    ) : <div />
+            }
+            {
+                props.post.comments ?
+                    !props.post.comments[0].root ? <Comment post={props.post.comments[0]} />
+                        : <div />
                     : <div />
-                : <div />}
+            }
         </div >
     )
 }

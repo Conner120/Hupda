@@ -6,7 +6,6 @@ module.exports = {
     subscribe: withFilter(
         () => pubsub.asyncIterator(types.POST_CHANGED),
         (payload, variables) => {
-            console.log(payload)
             return payload.PostChange.id === variables.id;
         },
     ),

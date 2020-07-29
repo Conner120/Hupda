@@ -17,7 +17,7 @@ const redis = require('redis');
 const RedisGraph = require("redisgraph.js").Graph;
 var subjects = require("subject-extractor")
 
-let ActivityTrack = new RedisGraph("ActivityTrack", 'localhost', 6379);
+let ActivityTrack = new RedisGraph("ActivityTrack", '10.0.0.112', 6379);
 
 // middleware that is specific to this router
 router.use(function timeLog(req, res, next) {

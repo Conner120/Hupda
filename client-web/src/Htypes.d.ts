@@ -22,7 +22,7 @@ export interface ProfileMin {
     "first": string,
     "last": string,
     "alc": number,
-    "profilepicuri": string
+    "profilePicURI": string
 }
 export interface ReactionMeta {
     "love": number,

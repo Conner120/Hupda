@@ -76,6 +76,7 @@ module.exports = function (sequelize, DataTypes) {
         profile.belongsTo(models.user, { foreignKeyConstraint: true, as: "user", foreignKey: 'user_id' })
         profile.belongsToMany(models.profile, { as: 'friends', through: 'friend_friend' })
         profile.hasMany(models.post, { foreignKey: 'profileId' });
+        profile.hasMany(models.share, { foreignKey: 'profileId' })
     }
     return profile;
 };

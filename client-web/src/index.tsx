@@ -5,9 +5,11 @@ import {
   BrowserRouter as Router, Redirect,
 } from "react-router-dom";
 import App from './App';
+import Cookies from 'js-cookie'
 import * as serviceWorker from './serviceWorker';
 import theme from './theme'
 import { ThemeProvider } from '@material-ui/core';
+
 ReactDOM.render(
   <Router >
     <React.StrictMode>

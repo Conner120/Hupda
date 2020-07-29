@@ -64,6 +64,7 @@ module.exports = function (sequelize, DataTypes) {
         post.hasMany(models.reaction, { foreignKey: 'post_id', sourceKey: 'id' });
         post.belongsTo(models.profile, { foreignKeyConstraint: true, as: "poster", foreignKey: 'profile_id' })
         post.hasMany(models.comment, { as: 'comments', foreignKey: 'post_id', sourceKey: 'id' })
+        post.hasOne(models.comment, { foreignKeyConstraint: true, as: "commented", foreignKey: 'comment_id' })
         post.hasMany(models.share, { as: 'shares', foreignKey: 'post_id', sourceKey: 'id' })
     }
     return post;

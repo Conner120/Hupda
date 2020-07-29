@@ -3,7 +3,7 @@ type ReactionMeta {
     love:Int
     like:Int
     dislike:Int
-    thank:Int
+    thanks:Int
     goodjob:Int
 }
 `;

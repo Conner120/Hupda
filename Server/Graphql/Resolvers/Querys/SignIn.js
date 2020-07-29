@@ -17,8 +17,8 @@ require('../../../config/passport.js')(passport); module.exports = async (root, 
     console.log("test")
 
     if (user.comparePassword(args.password)) {
-        const token = jwt.sign(JSON.parse(JSON.stringify({ id: user.id })), authSecret, { expiresIn: 86400 * 30 });
-        jwt.verify(token, authSecret, (erer, data) => {
+        const token = jwt.sign(JSON.parse(JSON.stringify({ id: user.id })), 'ConnerRocks', { expiresIn: 86400 * 30 });
+        jwt.verify(token, 'ConnerRocks', (erer, data) => {
             console.log(erer, data);
         });
         // res.cookie('jwt', token)

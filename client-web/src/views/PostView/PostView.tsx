@@ -2,63 +2,41 @@ import React, { useState, useEffect } from 'react'
 import { useParams } from "react-router-dom";
 import { useStores } from '../../stores'
 import { Post } from '../../components'
+import Skeleton from '@material-ui/lab/Skeleton';
+import { gql, useQuery } from '@apollo/client';
+import Profile from '../../stores/ProfileState';
+const GET_POST = gql`
+  query GetPost($id:String) {
+    Post(id:$id){
+        id
+        poster{
+            first
+            last
+            id
+            profilePicURI
+        }
+        title
+        content
+    }
+  }
+`;
 export default function PostView() {
     const { id } = useParams();
-    let [post, setPost] = useState()
     let [requestSent, setRequestSent] = useState(false)
     const { App } = useStores()
+    const prof = useStores().Profile
     let [requestedId, setRequestedId] = useState(id)
-    useEffect(() => {
-        // Run! Like go get some data from an API.
-        if (!requestSent) {
-            setRequestSent(true)
-            fetch(`/api/post?id=${id}&comments=true`, {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'jwt': App.auth
-                },
-            }).then(res => {
-                return res.json();
-            }).then(post => {
-                if (!post.root) {
-                    let tempPost = post.rootPost
-                    tempPost.comments = [post]
-                    setPost(tempPost)
-                } else {
-                    let tempPost = post
-                    setPost(tempPost)
-                }
-            });
-        } else {
-            if (requestedId != id) {
-                setRequestedId(id)
-                fetch(`/api/post?id=${id}&comments=true`, {
-                    method: 'GET',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                        'jwt': App.auth
-                    },
-                }).then(res => {
-                    return res.json();
-                }).then(post => {
-                    if (!post.root) {
-                        let tempPost = post.rootPost
-                        tempPost.comments = [post]
-                        setPost(tempPost)
-                    } else {
-                        let tempPost = post
-                        setPost(tempPost)
-                    }
-                });
-            }
-        }
+    const { loading, error, data } = useQuery(GET_POST, {
+        variables: { id: id ? id : prof.id },
     });
+    if (loading) return (<div><Skeleton variant="text" />
+        <Skeleton variant="circle" width={40} height={40} />
+        <Skeleton variant="rect" height={180} /></div>);
+    // if (error) return `Error! ${error}`;
     return (
+
         <div>
-            {(post) ? <Post post={post} compressed={false} requestedId={id} /> : <h3>loading</h3>}
+            {(data) ? <Post post={data.Post} compressed={false} requestedId={id} /> : <h3>loading</h3>}
         </div>
     )
 }

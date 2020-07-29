@@ -18,7 +18,6 @@ const Routes = () => {
     let history = useHistory();
     const { App } = useStores()
     if (Cookies.get('jwt')) {
-        App.auth = (Cookies.get('jwt') ? Cookies.get('jwt') : '') as string
     } else {
         history.push('/login')
     }
@@ -52,6 +51,11 @@ const Routes = () => {
             />
             <Route
                 path="/profile/:id"
+            >
+                <ProfileView />
+            </Route>
+            <Route
+                path="/profile"
             >
                 <ProfileView />
             </Route>

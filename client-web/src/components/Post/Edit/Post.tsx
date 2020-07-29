@@ -141,7 +141,7 @@ export default function PostEdit(props: { share: { id: string, post: Post } }) {
                             avatar={
 
                                 <Tooltip title={`${props.share.post?.poster.first} ${props.share.post.poster.last}`}>
-                                    <Avatar aria-label="recipe" className={classes.large} src={props.share.post?.poster.profilepicuri} alt={`Profile image for ${props.share.post?.poster.first} ${props.share.post?.poster.last}`}>
+                                    <Avatar aria-label="recipe" className={classes.large} src={props.share.post?.poster.profilePicURI} alt={`Profile image for ${props.share.post?.poster.first} ${props.share.post?.poster.last}`}>
                                     </Avatar>
                                 </Tooltip>
                             }
