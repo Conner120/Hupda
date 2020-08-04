@@ -14,7 +14,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "apollo-server": "2.16.0",
+        "apollo-server": "^2.16.0",
         "azure-storage": "^2.10.3",
         "bcrypt-nodejs": "0.0.3",
         "compression": "^1.7.4",
@@ -22,6 +22,7 @@
         "cors": "^2.8.5",
         "express": "^4.17.1",
         "express-graphql": "^0.11.0",
+        "graphql-iso-date": "^3.6.1",
         "graphql-playground-middleware-express": "^1.7.18",
         "graphql-redis-subscriptions": "^2.2.1",
         "http-errors": "^1.7.3",

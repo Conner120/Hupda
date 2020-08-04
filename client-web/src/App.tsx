@@ -1,12 +1,11 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import clsx from 'clsx';
 import { Switch, Route } from 'react-router-dom';
 import {
   LoginView
 } from './views';
-import { gql, useQuery } from '@apollo/client';
+import { gql } from '@apollo/client';
 import { useHistory, useLocation } from "react-router-dom";
-import { Link } from '@material-ui/core';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Drawer from '@material-ui/core/Drawer';
 import AppBar from '@material-ui/core/AppBar';
@@ -27,8 +26,6 @@ import { RiUser3Line } from 'react-icons/ri'
 import Cookies from 'js-cookie'
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import MailIcon from '@material-ui/icons/Mail';
 // import Button from '@material-ui/core/Button'
 import Routes from './Routes'
 import { useStores } from './stores'

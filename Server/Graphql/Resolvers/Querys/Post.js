@@ -12,7 +12,8 @@ module.exports = async (root, args, { req, db, profile }, info) => {
                 const poster = post.poster;
                 post.poster = {
                     first: poster.first,
-                    last: poster.last.charAt(0)
+                    last: poster.last.charAt(0),
+                    id: poster.id
                 }
             } else {
                 post.poster.profilePicURI = getProfilePicture(post.poster.id)
@@ -23,11 +24,12 @@ module.exports = async (root, args, { req, db, profile }, info) => {
                 console.log(current)
                 post.reactions = current.properties
             }
+            console.log(post.poster.id)
             return post
         } else {
             throw new Error(`Invalid access to post must be a ${getALCString(post.alc)}`)
         }
     } else {
-        throw new Error(`Invalid access to post must be a ${getALCString(post.alc)}`)
+        throw new Error(`Invalid access to post must in error`)
     }
 }

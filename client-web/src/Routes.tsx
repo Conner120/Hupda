@@ -12,11 +12,9 @@ import {
     CreatePostView,
 } from './views';
 import { useStores } from './stores'
-import Profile from './stores/ProfileState';
 
 const Routes = () => {
     let history = useHistory();
-    const { App } = useStores()
     if (Cookies.get('jwt')) {
     } else {
         history.push('/login')

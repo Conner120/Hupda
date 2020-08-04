@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import { Post } from '../../../Htypes';
-import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CardHeader from '@material-ui/core/CardHeader';
 import Avatar from '@material-ui/core/Avatar';
@@ -54,12 +53,9 @@ const useStyles = makeStyles((theme: Theme) =>
 
 export default function PostView(props: { post: Post, compressed?: boolean, requestedId?: string, showEnlarge?: boolean }) {
     const classes = useStyles();
-    let [comments, setComments] = useState()
-    let [requestSent, setRequestSent] = useState(false)
     const history = useHistory();
-    const { App } = useStores()
     const goToPost = (id: string) => {
-        if (id != props.requestedId) {
+        if (id !== props.requestedId) {
             // history.replace(`/post/${id}`)
             history.push(`/post/${id}`)
         }
@@ -77,6 +73,7 @@ export default function PostView(props: { post: Post, compressed?: boolean, requ
             history.push(`/create/post/${props.post.id}/true`)
         }
     }
+    console.log(props.post.createdAt)
     return (
         <div >
             <div>
@@ -93,7 +90,7 @@ export default function PostView(props: { post: Post, compressed?: boolean, requ
 
                         title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.poster.first} ${props.post.poster.last} `}</Typography></Link> {props.post.title}
                             <div className={classes.floatRight}>{props.showEnlarge ? <IconButton onClick={() => { goToPostInNew(props.post.id) }}> <OpenInNewIcon /></IconButton> : <div />}</div></div>}
-                        subheader={moment(props.post.createdAt).fromNow()}
+                        subheader={moment(parseInt(props.post.createdAt)).fromNow()}
                     >
 
                     </CardHeader>
@@ -136,21 +133,6 @@ export default function PostView(props: { post: Post, compressed?: boolean, requ
                     }
                 </Card >
             </div>
-            {
-                (comments) ?
-                    comments.map((element: any) =>
-                        <div onClick={() => { goToPost(element.id) }}>
-                            <Comment post={element} />
-                        test
-                    </div>
-                    ) : <div />
-            }
-            {
-                props.post.comments ?
-                    !props.post.comments[0].root ? <Comment post={props.post.comments[0]} />
-                        : <div />
-                    : <div />
-            }
         </div >
     )
 }

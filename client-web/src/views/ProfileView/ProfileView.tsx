@@ -1,34 +1,21 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useParams } from "react-router-dom";
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import ListItemText from '@material-ui/core/ListItemText';
 import { useStores } from '../../stores'
 import { makeStyles } from '@material-ui/core/styles';
 import { Post } from '../../components';
-import { Post as IPost } from '../../Htypes';
-import { profile } from 'console';
-import Paper from '@material-ui/core/Paper';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import Grid from '@material-ui/core/Grid';
 import { useHistory } from "react-router-dom";
 import InfiniteScroll from 'react-infinite-scroll-component';
-import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Skeleton from '@material-ui/lab/Skeleton';
 import { gql, useQuery } from '@apollo/client';
 const GET_PROFILE = gql`
-query getProfile($id:String){
+query getProfile($id:String,$offset:Int){
     
-    MyPosts(page:0,size:10){
+    MyPosts(page:$offset,size:10){
       title
       id
       content
+      createdAt
       poster{
         first
         id
@@ -59,22 +46,39 @@ const useStyles = makeStyles((theme) => ({
         flexFlow: 'column'
     }
 }));
-
+export interface Post {
+    id: string,
+    title: string,
+    postId: string,
+    content: string,
+    profileId: string,
+    alc: number,
+    visible: string,
+    createdAt: Date,
+    updatedAt: Date,
+    shareCount: number,
+    comments: [Post],
+    rootPost?: Post,
+    root?: boolean,
+    sharedContent?: Post,
+}
+export interface fdsds {
+    MyPosts: [Post]
+}
 export default function PostView() {
     const { id } = useParams();
-    const classes = useStyles();
     let [requestSent, setRequestSent] = useState(false)
-    const { App, Profile } = useStores()
+    const { Profile } = useStores()
     const history = useHistory();
-    const goToPost = (id: string) => {
-        history.push(`/post/${id}`)
+    const onCompleted = (data: any) => {
+        setRequestSent(!requestSent)
+        console.log('dsd')
     }
-    let [requestedId, setRequestedId] = useState(id)
-    const { loading, error, data, fetchMore } = useQuery(GET_PROFILE, { variables: { id: (id ? id : Profile.id) } });
+    const { loading, error, data, fetchMore } = useQuery(GET_PROFILE, { variables: { id: (id ? id : Profile.id), offset: 0 }, onCompleted });
     if (loading) return (<div><Skeleton variant="text" />
         <Skeleton variant="circle" width={40} height={40} />
         <Skeleton variant="rect" height={180} /></div>);
-    // if (error) return `Error! ${error}`;
+    if (error) return <div>Error! {error}</div>;
     return (
         <div>
             {(data) ?
@@ -83,8 +87,17 @@ export default function PostView() {
                     </Grid>
                     <Grid item xs={12} md={9} xl={6}>
                         <InfiniteScroll
-                            dataLength={data.PostCount.posts} //This is important field to render the next data
+                            dataLength={data.MyPosts.length - 1} //This is important field to render the next data
                             next={() => {
+                                fetchMore({
+                                    variables: {
+                                        offset: data.MyPosts.length
+                                    },
+                                    updateQuery: (prev, { fetchMoreResult }: { fetchMoreResult?: fdsds }) => {
+                                        return ({ MyPosts: data.MyPosts.concat(fetchMoreResult?.MyPosts) })
+                                    }
+                                })
+
                                 console.log('ds')
                             }}
                             hasMore={true}

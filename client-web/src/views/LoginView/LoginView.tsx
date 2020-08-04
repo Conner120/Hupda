@@ -8,7 +8,7 @@ export default function Home() {
     } else {
     }
     const login = () => {
-        Cookies.set('jwt', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImI0YTAzNmNmLTdlZDUtNDFmOC1iNTdhLTRmODgwYzRkYTVmYiIsImlhdCI6MTU5NTM4MDI4NywiZXhwIjoxNTk3OTcyMjg3fQ.rnNbfykvEytJBjvL_cfrYR0zNw_Q3aqERr2DJaLkfa8')
+        Cookies.set('jwt', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImEyYjlhNjhlLTI1YmQtNDYxNC04NjUyLTJhYzg5YTg4OTVmNyIsImlhdCI6MTU5NjI0MDkyMiwiZXhwIjoxNTk4ODMyOTIyfQ.YWrIgPozf38gKyUlVdIdDYrAxrovkaTlkM8qm8ehfEU')
         history.push('/home')
     }
     return (

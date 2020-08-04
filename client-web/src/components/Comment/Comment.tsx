@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { makeStyles, Theme, createStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import { Post } from '../../Htypes';
-import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CardHeader from '@material-ui/core/CardHeader';
 import Avatar from '@material-ui/core/Avatar';
 import Tooltip from '@material-ui/core/Tooltip';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { useStores } from '../../stores'
+import Box from '@material-ui/core/Box';
+
 import moment from 'moment';
 import ShareIcon from '@material-ui/icons/Share';
 import { useHistory } from "react-router-dom";
 import { Link, IconButton } from '@material-ui/core';
-import { Post as PostComp } from '../../components'
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
-            paddingTop: 10,
-            width: '90%',
-            float: 'right'
+            // height: '-webkit-fill-available'
         },
         media: {
             height: 0,
@@ -53,18 +52,20 @@ const useStyles = makeStyles((theme: Theme) =>
     }),
 );
 
-export default function Comment(props: { post: Post, compressed?: boolean }) {
+export default function Comment(props: { post: Post, compressed?: boolean, requestedId?: string, showEnlarge?: boolean }) {
     const classes = useStyles();
-    let [comments, setComments] = useState()
-    let [requestSent, setRequestSent] = useState(false)
     const history = useHistory();
-    const { App } = useStores()
     const goToPost = (id: string) => {
+        if (id !== props.requestedId) {
+            // history.replace(`/post/${id}`)
+            history.push(`/post/${id}`)
+        }
+    }
+    const goToPostInNew = (id: string) => {
         history.push(`/post/${id}`)
     }
     const goToProfile = () => {
         if (window.location.pathname !== `/profile/${props.post.poster.id}`) {
-
             history.push(`/profile/${props.post.poster.id}`)
         }
     }
@@ -73,13 +74,66 @@ export default function Comment(props: { post: Post, compressed?: boolean }) {
             history.push(`/create/post/${props.post.id}/true`)
         }
     }
-    useEffect(() => {
-    });
+    console.log((props.post.createdAt))
     return (
-        <div className={classes.root}>
-            <Card variant="outlined">
-                <PostComp post={props.post} ></PostComp>
-            </Card>
+        <div >
+            <div>
+                <Box borderTop={1}>
+                    <CardHeader
+                        avatar={
+
+                            <Tooltip title={`${props.post.poster.first} ${props.post.poster.last}`}>
+                                <Avatar aria-label="recipe" className={classes.large} src={props.post.poster.profilePicURI} alt={`Profile image for ${props.post.poster.first} ${props.post.poster.last} `}>
+                                </Avatar>
+                            </Tooltip>
+
+                        }
+
+                        title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.poster.first} ${props.post.poster.last} `}</Typography></Link> {props.post.title}
+                            <div className={classes.floatRight}>{props.showEnlarge ? <IconButton onClick={() => { goToPostInNew(props.post.id) }}> <OpenInNewIcon /></IconButton> : <div />}</div></div>}
+                        subheader={moment(parseInt(props.post.createdAt)).fromNow()}
+                    >
+
+                    </CardHeader>
+                    <CardContent>
+                        <div className={classes.content} style={props.compressed ? { maxHeight: 200 } : { maxHeight: 500 }}>
+                            {props.post.content.split('\n').map((i) => {
+                                return (<Typography>
+                                    {i}
+                                </Typography>)
+                            })}
+                        </div>
+                        {props.post.sharedContent ? <div><br />< Card raised={true} className={classes.root} >
+                            <CardHeader
+                                avatar={
+
+                                    <Tooltip title={`${props.post.sharedContent?.poster.first} ${props.post.poster.last} `}>
+                                        <Avatar aria-label="recipe" className={classes.large} src={props.post.sharedContent?.poster.profilePicURI} alt={`Profile image for ${props.post.sharedContent?.poster.first} ${props.post.sharedContent?.poster.last} `}>
+                                        </Avatar>
+                                    </Tooltip>
+                                }
+
+                                title={<div><Link onClick={goToProfile}><Typography variant='overline'>{`${props.post.sharedContent?.poster.first} ${props.post.poster.last} `}</Typography></Link> <Link onClick={goToProfile}>{props.post.sharedContent?.title}</Link></div>}
+                                subheader={moment(props.post.sharedContent?.createdAt).fromNow()}
+                            />
+                            <CardContent>
+                                <Typography className={classes.content}>
+                                    {props.post.sharedContent?.content}
+                                </Typography>
+                            </CardContent>
+                            <CardActions>
+                            </CardActions>
+                        </Card > </div> : <div></div>}
+                    </CardContent>
+                    {props.compressed ? <div /> :
+                        < CardActions className={classes.floatRight}>
+                            {
+                                props.post.sharedContent ? <></> : <IconButton onClick={sharePost}><ShareIcon /></IconButton>
+                            }
+                        </CardActions>
+                    }
+                </Box>
+            </div>
         </div >
     )
 }

@@ -8,5 +8,6 @@ type Post {
     visible: String
     reactions: ReactionMeta
     root: Boolean
+    createdAt:String
 }
 `;
